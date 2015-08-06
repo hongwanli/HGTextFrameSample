@@ -8,19 +8,30 @@
 
 #import "ViewController.h"
 #import "HGWXOAuthLoginManager.h"
+#import "UIView+Additions.h"
+#import "UIImageView+WebCache.h"
 
-#define kTitleLabelLeftMargin           (10.f)
-#define kTitleLabelTopMargin            (100.f)
-#define kTitleLabelFontSize             (15.f)
+#define kTitleLabelLeftMargin               (10.f)
+#define kTitleLabelTopMargin                (30.f)
+#define kTitleLabelFontSize                 (15.f)
 
-#define kTitleLabelLineSpace            (20.f)
+#define kTitleLabelLineSpace                (20.f)
 
-#define kWXOAuthLoginButtonTopMargin    (10.f)
-#define kWXOAuthLoginButtonHeight       (50.f)
+#define kWXOAuthLoginButtonTopMargin        (10.f)
+#define kWXOAuthLoginButtonHeight           (50.f)
+
+#define kNickNameLabelTopMargin             (30.f)
+#define kNickNameLabelFontSize              (15.f)
+
+#define kUserHeaderImageViewTopMargin       (10.f)
+#define kUserHeaderImageViewWidth           (60.f)
+#define kUserHeaderImageViewHeight          (60.f)
 
 @interface ViewController ()
 @property (nonatomic, strong) UILabel * titleLabel;
 @property (nonatomic, strong) UIButton * WXOAuthLoginButton;
+@property (nonatomic, strong) UILabel * nickNameLabel;
+@property (nonatomic, strong) UIImageView * userHeaderImageView;
 @end
 
 @implementation ViewController
@@ -52,6 +63,9 @@
     CGRect frame = _WXOAuthLoginButton.frame;
     frame.origin.y = _titleLabel.frame.origin.y + _titleLabel.frame.size.height + kWXOAuthLoginButtonTopMargin;
     _WXOAuthLoginButton.frame = frame;
+    
+    [self nickNameLabel].top = _WXOAuthLoginButton.bottom + kNickNameLabelTopMargin;
+    [self userHeaderImageView].top = _nickNameLabel.bottom + kUserHeaderImageViewTopMargin;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -89,10 +103,39 @@
 - (void)OAuthLoginButtonPressed {
     [[HGWXOAuthLoginManager shareInstance] sendOAuthLoginRequestWithSuccessed:^(NSDictionary *userInfo) {
         NSLog(@"userInfo==%@",userInfo);
+        self.nickNameLabel.text = [userInfo objectForKey:@"nickname"];
+        NSString * imageURL = [userInfo objectForKey:@"headimgurl"];
+        [self.userHeaderImageView sd_setImageWithURL:[NSURL URLWithString:imageURL] completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL *imageURL) {
+            
+        }];
     } failed:^(NSError *error) {
         NSLog(@"获取授权信息失败");
     }];
 }
 
+- (UILabel *)nickNameLabel {
+    if (!_nickNameLabel) {
+        CGRect frame = CGRectMake(0, _WXOAuthLoginButton.bottom + kNickNameLabelTopMargin, self.view.frame.size.width - 2*kTitleLabelLeftMargin, kNickNameLabelFontSize);
+        _nickNameLabel = [[UILabel alloc] initWithFrame:frame];
+        _nickNameLabel.numberOfLines = 0.f;
+        _nickNameLabel.font = [UIFont systemFontOfSize:kNickNameLabelFontSize];
+        _nickNameLabel.layer.borderColor = [UIColor redColor].CGColor;
+        _nickNameLabel.layer.borderWidth = 0.5f;
+        _nickNameLabel.textAlignment = NSTextAlignmentCenter;
+        _nickNameLabel.centerX = self.view.centerX;
+        [self.view addSubview:_nickNameLabel];
+    }
+    return _nickNameLabel;
+}
+
+- (UIImageView *)userHeaderImageView {
+    if (!_userHeaderImageView) {
+        CGRect frame = CGRectMake(0, _nickNameLabel.bottom + kUserHeaderImageViewTopMargin, kUserHeaderImageViewWidth, kUserHeaderImageViewHeight);
+        _userHeaderImageView = [[UIImageView alloc] initWithFrame:frame];
+        _userHeaderImageView.centerX = self.view.centerX;
+        [self.view addSubview:_userHeaderImageView];
+    }
+    return _userHeaderImageView;
+}
 
 @end
